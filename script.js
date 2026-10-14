@@ -1,18 +1,15 @@
 
 (() => {
-  "use strict";
+  const currentFile = (
+    window.location.pathname.split("/").pop() || "index.html"
+  ).toLowerCase();
 
-  // Navigation: mark the current page.
-  const currentFile =
-    (window.location.pathname.split("/").pop() || "index.html").toLowerCase();
-
-  document.querySelectorAll(".nav-links a[href]").forEach((link) => {
+  document.querySelectorAll(".nav-links a[href]").forEach(link => {
     if (link.getAttribute("href").toLowerCase() === currentFile) {
       link.setAttribute("aria-current", "page");
     }
   });
 
-  // Mobile navigation.
   const menuToggle = document.querySelector(".menu-toggle");
   const navLinks = document.querySelector(".nav-links");
 
@@ -26,7 +23,7 @@
       );
     });
 
-    navLinks.querySelectorAll("a").forEach((link) => {
+    navLinks.querySelectorAll("a").forEach(link => {
       link.addEventListener("click", () => {
         navLinks.classList.remove("is-open");
         menuToggle.setAttribute("aria-expanded", "false");
@@ -34,93 +31,136 @@
     });
   }
 
-  // Current year in the footer.
   const yearElement = document.getElementById("year");
   if (yearElement) {
     yearElement.textContent = new Date().getFullYear();
   }
 
-  // English/French language toggle.
   const languageToggle = document.getElementById("language-toggle");
   let currentLanguage = "en";
   const originalTitle = document.title;
 
-  const translatePage = (language) => {
+  function translatePage(language) {
     currentLanguage = language;
     document.documentElement.lang = language;
 
-    document.querySelectorAll("[data-en][data-fr]").forEach((element) => {
+    document.querySelectorAll("[data-en][data-fr]").forEach(element => {
       const value = element.getAttribute(`data-${language}`);
       if (value !== null) element.innerHTML = value;
     });
+
+    document.querySelectorAll("[data-en-placeholder][data-fr-placeholder]")
+      .forEach(element => {
+        element.placeholder = element.getAttribute(
+          `data-${language}-placeholder`
+        );
+      });
 
     if (languageToggle) {
       languageToggle.textContent = language === "en" ? "FR" : "EN";
     }
 
-    document.title =
-      language === "en"
-        ? originalTitle
-        : "Ghostwall Security | Cybersécurité et solutions numériques au Cameroun";
-  };
+    document.title = language === "en"
+      ? originalTitle
+      : "Ghostwall Security | Cybersécurité et solutions numériques au Cameroun";
+  }
 
   languageToggle?.addEventListener("click", () => {
     translatePage(currentLanguage === "en" ? "fr" : "en");
   });
 
-  // Contact form configuration.
   const form = document.getElementById("contact-form");
   const note = document.getElementById("form-note");
+  const submitButton = form?.querySelector('button[type="submit"]');
+
   const companyEmail = "ghostwallsecurity@gmail.com";
   const whatsappNumber = "237680830228";
   const formspreeEndpoint = "https://formspree.io/f/xnpjgezp";
 
-  const setNote = (english, french) => {
-    if (note) {
-      note.textContent = currentLanguage === "fr" ? french : english;
-    }
-  };
+  function setNote(message, type = "") {
+    if (!note) return;
+    note.textContent = message;
+    note.classList.remove("is-success", "is-error");
 
-  const getEnquiry = () => {
+    if (type) note.classList.add(type);
+  }
+
+  function getEnquiry() {
     if (!form || !form.reportValidity()) return null;
 
     const data = new FormData(form);
     const isFrench = currentLanguage === "fr";
-    const business =
-      data.get("business") || (isFrench ? "Non précisée" : "Not provided");
+    const business = data.get("business") ||
+      (isFrench ? "Non précisée" : "Not provided");
+    const phone = data.get("phone") ||
+      (isFrench ? "Non précisé" : "Not provided");
 
     const message = [
       "GHOSTWALL SECURITY — " +
         (isFrench ? "Nouvelle demande de service" : "New service enquiry"),
       "",
-      `${isFrench ? "Nom" : "Name"}: ${data.get("name") || ""}`,
+      `${isFrench ? "Nom" : "Name"}: ${data.get("name")}`,
       `${isFrench ? "Entreprise / organisation" : "Business / organisation"}: ${business}`,
-      `Email: ${data.get("email") || ""}`,
-      `${isFrench ? "Service demandé" : "Service requested"}: ${data.get("service") || ""}`,
+      `${isFrench ? "Téléphone" : "Phone"}: ${phone}`,
+      `Email: ${data.get("email")}`,
+      `${isFrench ? "Service demandé" : "Service requested"}: ${data.get("service")}`,
       "",
       `${isFrench ? "Message" : "Message"}:`,
-      data.get("message") || ""
+      data.get("message")
     ].join("\n");
 
     return { message, isFrench };
-  };
+  }
 
-  // Real form submission: save the enquiry through Formspree.
+  document.getElementById("send-whatsapp")?.addEventListener("click", () => {
+    const enquiry = getEnquiry();
+    if (!enquiry) return;
+
+    setNote(
+      enquiry.isFrench
+        ? "WhatsApp va s'ouvrir. Vérifiez votre demande puis appuyez sur Envoyer. Le formulaire ne sera pas transmis à Formspree par cette action."
+        : "WhatsApp will open. Review your enquiry and press Send. This action does not submit the form to Formspree."
+    );
+
+    const url = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(enquiry.message)}`;
+    window.open(url, "_blank", "noopener,noreferrer");
+  });
+
+  document.getElementById("send-email")?.addEventListener("click", () => {
+    const enquiry = getEnquiry();
+    if (!enquiry) return;
+
+    const subject = enquiry.isFrench
+      ? "Demande de service — Ghostwall Security"
+      : "Service enquiry — Ghostwall Security";
+
+    setNote(
+      enquiry.isFrench
+        ? "Votre application e-mail va s'ouvrir. Vérifiez les détails puis appuyez sur Envoyer."
+        : "Your email app will open. Review the details and press Send."
+    );
+
+    window.location.href =
+      `mailto:${companyEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(enquiry.message)}`;
+  });
+
   if (form) {
-    form.addEventListener("submit", async (event) => {
+    form.addEventListener("submit", async event => {
       event.preventDefault();
 
       if (!form.reportValidity()) return;
 
-      const submitButton = form.querySelector(
-        'button[type="submit"], input[type="submit"]'
-      );
-
-      if (submitButton) submitButton.disabled = true;
+      if (submitButton) {
+        submitButton.disabled = true;
+        submitButton.textContent = currentLanguage === "fr"
+          ? "Envoi en cours..."
+          : "Sending...";
+      }
 
       setNote(
-        "Sending your enquiry securely…",
-        "Envoi de votre demande en cours…"
+        currentLanguage === "fr"
+          ? "Envoi de votre demande en cours..."
+          : "Sending your enquiry..."
       );
 
       try {
@@ -132,72 +172,46 @@
           }
         });
 
-        let result = {};
-        try {
-          result = await response.json();
-        } catch {
-          // Handle unexpected or non-JSON responses below.
+        if (!response.ok) {
+          let errorMessage = "";
+
+          try {
+            const result = await response.json();
+            errorMessage = result.errors
+              ?.map(error => error.message)
+              .join(" ");
+          } catch (_) {
+            // Use the general error message below.
+          }
+
+          throw new Error(errorMessage || "Submission failed.");
         }
 
-        if (!response.ok || result.errors) {
-          throw new Error("Form submission failed");
-        }
+        setNote(
+          currentLanguage === "fr"
+            ? "Votre demande a été envoyée avec succès. Merci d'avoir contacté Ghostwall Security."
+            : "Your enquiry was sent successfully. Thank you for contacting Ghostwall Security.",
+          "is-success"
+        );
 
         form.reset();
-
-        setNote(
-          "Thank you! Your enquiry has been submitted. We will contact you soon.",
-          "Merci ! Votre demande a bien été envoyée. Nous vous contacterons bientôt."
-        );
       } catch (error) {
-        console.error("Ghostwall enquiry submission failed:", error);
+        console.error("Enquiry submission failed:", error);
 
         setNote(
-          "We couldn't submit your enquiry. Please try again or contact us on WhatsApp.",
-          "Votre demande n'a pas pu être envoyée. Réessayez ou contactez-nous sur WhatsApp."
+          currentLanguage === "fr"
+            ? "L'envoi a échoué. Vérifiez votre connexion ou réessayez par WhatsApp ou e-mail."
+            : "Submission failed. Check your connection or try again using WhatsApp or email.",
+          "is-error"
         );
       } finally {
-        if (submitButton) submitButton.disabled = false;
+        if (submitButton) {
+          submitButton.disabled = false;
+          submitButton.textContent = currentLanguage === "fr"
+            ? "Envoyer la demande"
+            : "Send enquiry";
+        }
       }
     });
   }
-
-  // WhatsApp option: prepare the enquiry without submitting the web form.
-  document.getElementById("send-whatsapp")?.addEventListener("click", (event) => {
-    event.preventDefault();
-
-    const enquiry = getEnquiry();
-    if (!enquiry) return;
-
-    setNote(
-      "WhatsApp will open with your enquiry. Review the details and press Send. This option does not submit the website form.",
-      "WhatsApp va s'ouvrir avec votre demande. Vérifiez les détails puis appuyez sur Envoyer. Cette option n'envoie pas le formulaire du site."
-    );
-
-    const url =
-      `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(enquiry.message)}`;
-
-    window.open(url, "_blank", "noopener,noreferrer");
-  });
-
-  // Email-app option: prepare a draft in the visitor's email application.
-  document.getElementById("send-email")?.addEventListener("click", (event) => {
-    event.preventDefault();
-
-    const enquiry = getEnquiry();
-    if (!enquiry) return;
-
-    const subject = enquiry.isFrench
-      ? "Demande de service — Ghostwall Security"
-      : "Service enquiry — Ghostwall Security";
-
-    setNote(
-      "Your email app will open with the recipient and message. Review it and press Send. This option does not submit the website form.",
-      "Votre application e-mail va s'ouvrir avec le destinataire et le message. Vérifiez puis appuyez sur Envoyer. Cette option n'envoie pas le formulaire du site."
-    );
-
-    window.location.href =
-      `mailto:${companyEmail}?subject=${encodeURIComponent(subject)}` +
-      `&body=${encodeURIComponent(enquiry.message)}`;
-  });
 })();
