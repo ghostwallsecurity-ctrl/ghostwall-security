@@ -286,3 +286,95 @@
     border-radius:20px;
   }
 }
+
+/* ===== Contact form: privacy consent ===== */
+.privacy-consent {
+  display: flex;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 18px 0;
+  color: #b8c7d9;
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.privacy-consent input[type="checkbox"] {
+  flex: 0 0 auto;
+  width: 17px;
+  height: 17px;
+  margin: 3px 0 0;
+  accent-color: #168cff;
+  cursor: pointer;
+}
+
+.privacy-consent span {
+  flex: 1 1 220px;
+}
+
+.privacy-consent a {
+  color: #55b5ff;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.privacy-consent a:hover {
+  color: #ffffff;
+}
+
+/* ===== Contact form: submit button ===== */
+.form-submit {
+  min-height: 48px;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease,
+    opacity 0.2s ease;
+}
+
+.form-submit:hover {
+  transform: translateY(-2px);
+}
+
+.form-submit:focus-visible,
+.privacy-consent input:focus-visible {
+  outline: 2px solid #55b5ff;
+  outline-offset: 4px;
+}
+
+.form-submit:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+  transform: none;
+}
+
+/* ===== Contact form: status messages ===== */
+.form-note {
+  margin-top: 16px;
+  font-size: 13px;
+  line-height: 1.7;
+  color: #b8c7d9;
+}
+
+.form-note.is-success {
+  color: #65e6a5;
+}
+
+.form-note.is-error {
+  color: #ff9292;
+}
+
+/* ===== Contact form: mobile layout ===== */
+@media (max-width: 600px) {
+  .form-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .form-actions .form-submit {
+    width: 100%;
+  }
+
+  .privacy-consent {
+    font-size: 12px;
+  }
+}
