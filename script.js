@@ -16,6 +16,7 @@
   if (menuToggle && navLinks) {
     menuToggle.addEventListener("click", () => {
       const isOpen = navLinks.classList.toggle("is-open");
+
       menuToggle.setAttribute("aria-expanded", String(isOpen));
       menuToggle.setAttribute(
         "aria-label",
@@ -32,6 +33,7 @@
   }
 
   const yearElement = document.getElementById("year");
+
   if (yearElement) {
     yearElement.textContent = new Date().getFullYear();
   }
@@ -46,10 +48,14 @@
 
     document.querySelectorAll("[data-en][data-fr]").forEach(element => {
       const value = element.getAttribute(`data-${language}`);
-      if (value !== null) element.innerHTML = value;
+
+      if (value !== null) {
+        element.innerHTML = value;
+      }
     });
 
-    document.querySelectorAll("[data-en-placeholder][data-fr-placeholder]")
+    document
+      .querySelectorAll("[data-en-placeholder][data-fr-placeholder]")
       .forEach(element => {
         element.placeholder = element.getAttribute(
           `data-${language}-placeholder`
@@ -58,6 +64,22 @@
 
     if (languageToggle) {
       languageToggle.textContent = language === "en" ? "FR" : "EN";
+
+      languageToggle.setAttribute(
+        "aria-label",
+        language === "en"
+          ? "Switch language to French"
+          : "Passer en anglais"
+      );
+
+      languageToggle.setAttribute(
+        "aria-pressed",
+        String(language === "fr")
+      );
+
+      languageToggle.title = language === "en"
+        ? "Switch language to French"
+        : "Passer en anglais";
     }
 
     document.title = language === "en"
@@ -79,19 +101,26 @@
 
   function setNote(message, type = "") {
     if (!note) return;
+
     note.textContent = message;
     note.classList.remove("is-success", "is-error");
 
-    if (type) note.classList.add(type);
+    if (type) {
+      note.classList.add(type);
+    }
   }
 
   function getEnquiry() {
-    if (!form || !form.reportValidity()) return null;
+    if (!form || !form.reportValidity()) {
+      return null;
+    }
 
     const data = new FormData(form);
     const isFrench = currentLanguage === "fr";
+
     const business = data.get("business") ||
       (isFrench ? "Non précisée" : "Not provided");
+
     const phone = data.get("phone") ||
       (isFrench ? "Non précisé" : "Not provided");
 
@@ -114,6 +143,7 @@
 
   document.getElementById("send-whatsapp")?.addEventListener("click", () => {
     const enquiry = getEnquiry();
+
     if (!enquiry) return;
 
     setNote(
@@ -122,12 +152,15 @@
         : "WhatsApp will open. Review your enquiry and press Send. This action does not submit the form to Formspree."
     );
 
-    const url = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(enquiry.message)}`;
+    const url =
+      `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(enquiry.message)}`;
+
     window.open(url, "_blank", "noopener,noreferrer");
   });
 
   document.getElementById("send-email")?.addEventListener("click", () => {
     const enquiry = getEnquiry();
+
     if (!enquiry) return;
 
     const subject = enquiry.isFrench
@@ -177,6 +210,7 @@
 
           try {
             const result = await response.json();
+
             errorMessage = result.errors
               ?.map(error => error.message)
               .join(" ");
